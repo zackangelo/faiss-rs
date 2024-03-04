@@ -18,7 +18,17 @@ fn static_link_faiss() {
         })
         .define("FAISS_ENABLE_PYTHON", "OFF")
         .define("BUILD_TESTING", "OFF")
-        .very_verbose(true);
+        .very_verbose(true)
+        //TODO make this conditional on macos
+        .define("OpenMP_C_FLAGS","-fopenmp=lomp")
+        .define("OpenMP_CXX_FLAGS","-fopenmp=lomp")
+        .define("OpenMP_C_LIB_NAMES","libomp")
+        .define("OpenMP_CXX_LIB_NAMES","libomp")
+        .define("OpenMP_libomp_LIBRARY","/opt/homebrew/opt/libomp/lib/libomp.dylib")
+        .define("OpenMP_CXX_FLAGS","-Xpreprocessor -fopenmp /opt/homebrew/opt/libomp/lib/libomp.dylib -I/opt/homebrew/opt/libomp/include")
+        .define("OpenMP_CXX_LIB_NAMES","libomp")
+        .define("OpenMP_C_FLAGS","-Xpreprocessor -fopenmp /opt/homebrew/opt/libomp/lib/libomp.dylib -I/opt/homebrew/opt/libomp/include")
+        ;
     let dst = cfg.build();
     let faiss_location = dst.join("lib");
     let faiss_c_location = dst.join("build/c_api");
@@ -33,7 +43,7 @@ fn static_link_faiss() {
     println!("cargo:rustc-link-lib=static=faiss_c");
     println!("cargo:rustc-link-lib=static=faiss");
     link_cxx();
-    println!("cargo:rustc-link-lib=gomp");
+    // println!("cargo:rustc-link-lib=gomp");
     println!("cargo:rustc-link-lib=blas");
     println!("cargo:rustc-link-lib=lapack");
     if cfg!(feature = "gpu") {
