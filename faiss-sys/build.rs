@@ -7,28 +7,30 @@ fn main() {
 
 #[cfg(feature = "static")]
 fn static_link_faiss() {
+    let os = std::env::var("CARGO_CFG_TARGET_OS").expect("CARGO_CFG_TARGET_OS not found");
     let mut cfg = cmake::Config::new("faiss");
     cfg.define("FAISS_ENABLE_C_API", "ON")
         .define("BUILD_SHARED_LIBS", "OFF")
         .define("CMAKE_BUILD_TYPE", "Release")
-        .define("FAISS_ENABLE_GPU", if cfg!(feature = "gpu") {
-            "ON"
-        } else {
-            "OFF"
-        })
+        .define(
+            "FAISS_ENABLE_GPU",
+            if cfg!(feature = "gpu") { "ON" } else { "OFF" },
+        )
         .define("FAISS_ENABLE_PYTHON", "OFF")
         .define("BUILD_TESTING", "OFF")
-        .very_verbose(true)
-        //TODO make this conditional on macos
-        .define("OpenMP_C_FLAGS","-fopenmp=lomp")
-        .define("OpenMP_CXX_FLAGS","-fopenmp=lomp")
-        .define("OpenMP_C_LIB_NAMES","libomp")
-        .define("OpenMP_CXX_LIB_NAMES","libomp")
-        .define("OpenMP_libomp_LIBRARY","/opt/homebrew/opt/libomp/lib/libomp.dylib")
-        .define("OpenMP_CXX_FLAGS","-Xpreprocessor -fopenmp /opt/homebrew/opt/libomp/lib/libomp.dylib -I/opt/homebrew/opt/libomp/include")
-        .define("OpenMP_CXX_LIB_NAMES","libomp")
-        .define("OpenMP_C_FLAGS","-Xpreprocessor -fopenmp /opt/homebrew/opt/libomp/lib/libomp.dylib -I/opt/homebrew/opt/libomp/include")
-        ;
+        .very_verbose(true);
+
+    if os == "macos" {
+        cfg.define("OpenMP_C_FLAGS","-fopenmp=lomp")
+            .define("OpenMP_CXX_FLAGS","-fopenmp=lomp")
+            .define("OpenMP_C_LIB_NAMES","libomp")
+            .define("OpenMP_CXX_LIB_NAMES","libomp")
+            .define("OpenMP_libomp_LIBRARY","/opt/homebrew/opt/libomp/lib/libomp.dylib")
+            .define("OpenMP_CXX_FLAGS","-Xpreprocessor -fopenmp /opt/homebrew/opt/libomp/lib/libomp.dylib -I/opt/homebrew/opt/libomp/include")
+            .define("OpenMP_CXX_LIB_NAMES","libomp")
+            .define("OpenMP_C_FLAGS","-Xpreprocessor -fopenmp /opt/homebrew/opt/libomp/lib/libomp.dylib -I/opt/homebrew/opt/libomp/include");
+    }
+
     let dst = cfg.build();
     let faiss_location = dst.join("lib");
     let faiss_c_location = dst.join("build/c_api");
